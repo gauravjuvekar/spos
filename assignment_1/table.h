@@ -14,7 +14,9 @@ typedef int (table_compare_entry)(const void *a, const void *b);
 
 void table_init(Table *table, size_t entry_len);
 void table_deinit(Table *table);
-void table_insert(Table *table, void *entry);
+void table_insert(Table *table, const void *entry);
+void table_update_or_insert(Table *table, const void *entry,
+                            table_compare_entry compare_function);
 int table_index(const Table *table, const void *search,
                 table_compare_entry compare_function);
 void *table_get(const Table *table, size_t index);

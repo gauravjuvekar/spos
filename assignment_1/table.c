@@ -20,7 +20,7 @@ void table_deinit(Table *table) {
 	table->malloced_len = 0;
 }
 
-void table_insert(Table *table, void *entry) {
+void table_insert(Table *table, const void *entry) {
 	if (table->malloced_len < (table->entry_len * (table->n_entries + 1))) {
 		table->entries = realloc(table->entries, table->malloced_len * 2);
 		if (table->entries == NULL) {
@@ -57,4 +57,17 @@ void table_remove(Table *table, size_t index) {
 	       table->entries + (table->entry_len * table->n_entries),
 		   table->entry_len);
 	table->n_entries -= 1;
+}
+
+void table_update_or_insert(Table *table, const void *entry,
+							table_compare_entry compare_function) {
+	int index = table_index(table, entry, compare_function);
+	if (index < 0) {
+		table_insert(table, entry);
+	}
+	else {
+		memcpy(table->entries + (table->entry_len * index),
+		       entry,
+			   table->entry_len);
+	}
 }
