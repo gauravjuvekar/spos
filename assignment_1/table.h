@@ -19,6 +19,8 @@ void table_update_or_insert(Table *table, const void *entry,
                             table_compare_entry compare_function);
 int table_index(const Table *table, const void *search,
                 table_compare_entry compare_function);
+void *table_find(const Table *table, const void *search,
+				 table_compare_entry compare_function);
 void *table_get(const Table *table, size_t index);
 void table_remove(Table *table, size_t index);
 

@@ -52,6 +52,17 @@ void *table_get(const Table *table, size_t index) {
 	return table->entries + (table->entry_len * index);
 }
 
+void *table_find(const Table *table, const void *search,
+				 table_compare_entry compare_function) {
+	int index = table_index(table, search, compare_function);
+	if (index < 0) {
+		return NULL;
+	}
+	else {
+		return table_get(table, index);
+	}
+}
+
 void table_remove(Table *table, size_t index) {
 	memcpy(table->entries + (table->entry_len * index),
 	       table->entries + (table->entry_len * table->n_entries),
