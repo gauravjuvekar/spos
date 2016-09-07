@@ -10,7 +10,7 @@ typedef struct Table {
 	size_t malloced_len;
 } Table;
 
-typedef int (table_compare_entry)(const void *a, const void *b);
+typedef int (table_compare_entry)(const void *search, const void *table_term);
 
 void table_init(Table *table, size_t entry_len);
 void table_deinit(Table *table);
