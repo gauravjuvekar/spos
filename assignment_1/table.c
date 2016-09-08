@@ -38,15 +38,22 @@ void table_insert(Table *table, const void *entry) {
 
 int table_index(const Table *table, const void *search,
 				table_compare_entry compare_function) {
-	size_t i = 0;
-	for (i = 0; i < table->n_entries; ++i) {
+	return table_index_from(table, search, compare_function, 0);
+}
+
+int table_index_from(const Table *table, const void *search,
+				     table_compare_entry compare_function,
+				     size_t index) {
+	for (; index < table->n_entries; ++index) {
 		if (compare_function(search,
-							 table->entries + (i * table->entry_len)) == 0) {
-			return i;
+							 table->entries +
+							 (index * table->entry_len)) == 0) {
+			return index;
 		}
 	}
 	return -1;
 }
+
 
 void *table_get(const Table *table, size_t index) {
 	return table->entries + (table->entry_len * index);
@@ -54,14 +61,21 @@ void *table_get(const Table *table, size_t index) {
 
 void *table_find(const Table *table, const void *search,
 				 table_compare_entry compare_function) {
-	int index = table_index(table, search, compare_function);
-	if (index < 0) {
+	return table_find_from(table, search, compare_function, 0);
+}
+
+void *table_find_from(const Table *table, const void *search,
+				      table_compare_entry compare_function,
+				      size_t index) {
+	int index_get = table_index_from(table, search, compare_function, index);
+	if (index_get < 0) {
 		return NULL;
 	}
 	else {
-		return table_get(table, index);
+		return table_get(table, index_get);
 	}
 }
+
 
 void table_remove(Table *table, size_t index) {
 	memcpy(table->entries + (table->entry_len * index),
