@@ -6,63 +6,28 @@
 #include <string.h>
 
 const Instruction instruction_list[] = {
-	{.mnemonic="STOP",   .n_min_operands=0, .n_max_operands=0,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=0},
-	{.mnemonic="ADD",    .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=1},
-	{.mnemonic="SUB",    .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=2},
-	{.mnemonic="MULT",   .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=3},
-	{.mnemonic="MOVER",  .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=4},
-	{.mnemonic="MOVEM",  .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=5},
-	{.mnemonic="COMP",   .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=6},
-	{.mnemonic="BC",     .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=7},
-	{.mnemonic="DIV",    .n_min_operands=2, .n_max_operands=2,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=8},
-	{.mnemonic="READ",   .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=9},
-	{.mnemonic="PRINT",  .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS,
-	 .info.opcode=10},
+	{.mnemonic="STOP",   .n_min_operands=0, .n_max_operands=0, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_NONE,      .info.opcode=0},
+	{.mnemonic="ADD",    .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=1},
+	{.mnemonic="SUB",    .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=2},
+	{.mnemonic="MULT",   .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=3},
+	{.mnemonic="MOVER",  .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=4},
+	{.mnemonic="MOVEM",  .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=5},
+	{.mnemonic="COMP",   .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=6},
+	{.mnemonic="BC",     .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_CONDITION, .info.opcode=7},
+	{.mnemonic="DIV",    .n_min_operands=2, .n_max_operands=2, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_REGISTER,  .info.opcode=8},
+	{.mnemonic="READ",   .n_min_operands=1, .n_max_operands=1, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_SYMBOL,    .info.opcode=9},
+	{.mnemonic="PRINT",  .n_min_operands=1, .n_max_operands=1, .requires_label=false, .length=1, .class=MNEMONIC_CLASS_IS, .op_type=OP_TYPE_SYMBOL,    .info.opcode=10},
 
-	{.mnemonic="DC",     .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_DS,
-	 .info.declaration=1},
-	{.mnemonic="DS",     .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_DS,
-	 .info.declaration=2},
+	{.mnemonic="DC",     .n_min_operands=1, .n_max_operands=1, .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_DS, .op_type=OP_TYPE_LITERAL,   .info.declaration=1},
+	{.mnemonic="DS",     .n_min_operands=1, .n_max_operands=1, .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_DS, .op_type=OP_TYPE_CONSTANT,  .info.declaration=2},
 
-	{.mnemonic="START",  .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD,
-	 .info.directive=1},
-	{.mnemonic="END",    .n_min_operands=0, .n_max_operands=1,
-	 .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD,
-	 .info.directive=2},
-	{.mnemonic="ORIGIN", .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD,
-	 .info.directive=3},
-	{.mnemonic="EQU",    .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_AD,
-	 .info.directive=4},
-	{.mnemonic="LTORG",  .n_min_operands=1, .n_max_operands=1,
-	 .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD,
-	 .info.directive=5},
+	{.mnemonic="START",  .n_min_operands=1, .n_max_operands=1, .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD, .op_type=OP_TYPE_CONSTANT,  .info.directive=1},
+	{.mnemonic="END",    .n_min_operands=0, .n_max_operands=1, .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD, .op_type=OP_TYPE_SYMBOL,    .info.directive=2},
+	{.mnemonic="ORIGIN", .n_min_operands=1, .n_max_operands=1, .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD, .op_type=OP_TYPE_SYMBOL,    .info.directive=3},
+	{.mnemonic="EQU",    .n_min_operands=1, .n_max_operands=1, .requires_label=true,  .length=0, .class=MNEMONIC_CLASS_AD, .op_type=OP_TYPE_SYMBOL,    .info.directive=4},
+	{.mnemonic="LTORG",  .n_min_operands=0, .n_max_operands=0, .requires_label=false, .length=0, .class=MNEMONIC_CLASS_AD, .op_type=OP_TYPE_NONE,      .info.directive=5},
 };
+
 const Table instruction_table = {
 	.entries=(void *)&instruction_list[0],
 	.entry_len=sizeof(instruction_list[0]),
@@ -75,16 +40,16 @@ int instruction_table_lookup_mnemonic(const void *search,
 }
 
 const Operand operand_list[] = {
-	{.mnemonic="AREG", .infoval=1},
-	{.mnemonic="BREG", .infoval=2},
-	{.mnemonic="CREG", .infoval=3},
-	{.mnemonic="DREG", .infoval=4},
-	{.mnemonic="LT",   .infoval=1},
-	{.mnemonic="LE",   .infoval=2},
-	{.mnemonic="EQ",   .infoval=3},
-	{.mnemonic="GT",   .infoval=4},
-	{.mnemonic="GE",   .infoval=5},
-	{.mnemonic="ANY",  .infoval=6}
+	{.mnemonic="AREG", .infoval=1, .type=OP_TYPE_REGISTER},
+	{.mnemonic="BREG", .infoval=2, .type=OP_TYPE_REGISTER},
+	{.mnemonic="CREG", .infoval=3, .type=OP_TYPE_REGISTER},
+	{.mnemonic="DREG", .infoval=4, .type=OP_TYPE_REGISTER},
+	{.mnemonic="LT",   .infoval=1, .type=OP_TYPE_CONDITION},
+	{.mnemonic="LE",   .infoval=2, .type=OP_TYPE_CONDITION},
+	{.mnemonic="EQ",   .infoval=3, .type=OP_TYPE_CONDITION},
+	{.mnemonic="GT",   .infoval=4, .type=OP_TYPE_CONDITION},
+	{.mnemonic="GE",   .infoval=5, .type=OP_TYPE_CONDITION},
+	{.mnemonic="ANY",  .infoval=6, .type=OP_TYPE_CONDITION}
 };
 const Table operand_table = {
 	.entries=(void *)&operand_list[0],
@@ -96,8 +61,6 @@ int operand_table_lookup_mnemonic(const void *search, const void *table_term) {
 	return strcmp(search, ((Operand  *)table_term)->mnemonic);
 }
 
-
-#define MAX_TOKENS_PER_LINE (4)
 static int get_tokens(char tokens[static MAX_TOKENS_PER_LINE][32],
 					  char *line) {
 
@@ -133,7 +96,7 @@ AsmSrcLine parse_line(char *line) {
 		.operand2="",
 		.error=ASM_SRC_OK
 	};
-	char tokens[4][32] = {"", "", "", ""};
+	char tokens[MAX_TOKENS_PER_LINE][MAX_TOKEN_LEN] = {"", "", "", ""};
 
 	const int n_tokens = get_tokens(tokens, line);
 
@@ -239,5 +202,7 @@ const char *ASM_SRC_ERROR_STR[] = {
 	[ASM_SRC_RESERVED_KEYWORD_OPERAND_1]="operand 1 cannot be a reserved keyword",
 	[ASM_SRC_RESERVED_KEYWORD_OPERAND_2]="operand 2 cannot be a reserved keyword",
 	[ASM_SRC_TRAILING_CHARACTERS]="trailing characters",
-	[ASM_SRC_BLANK_LINE]="blank line"
+	[ASM_SRC_BLANK_LINE]="blank line",
+	[ASM_SRC_INVALID_OPERAND]="invalid operand",
+	[ASM_SRC_SYMBOL_REDEFINED]="redefinition of symbol"
 };

@@ -29,5 +29,7 @@ void *table_find(const Table *table, const void *search,
 				 table_compare_entry compare_function);
 void *table_get(const Table *table, size_t index);
 void table_remove(Table *table, size_t index);
+void table_insert_or_ignore(Table *table, const void *entry,
+							table_compare_entry compare_function);
 
 #endif /* ifndef TABLE_H */

@@ -96,3 +96,13 @@ void table_update_or_insert(Table *table, const void *entry,
 			   table->entry_len);
 	}
 }
+
+void table_insert_or_ignore(Table *table, const void *entry,
+							table_compare_entry compare_function) {
+	if (table_find(table, entry, compare_function) == NULL) {
+		return;
+	}
+	else {
+		table_insert(table, entry);
+	}
+}
