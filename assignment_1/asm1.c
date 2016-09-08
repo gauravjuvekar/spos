@@ -83,8 +83,8 @@ int symbol_table_lookup_symbol(const void *symbol, const void *entry) {
 	return strcmp(((Symbol  *)symbol)->spec, ((Symbol *)entry)->spec);
 }
 
-int literal_table_lookup_literal(const void *literal, const void *entry) {
-	return strcmp((char *)literal, ((Literal *)entry)->spec);
+int literal_table_lookup_val(const void *literal, const void *entry) {
+	return ((int)literal) - ((Literal *)entry)->val ;
 }
 
 int main(__attribute__((unused))int argc, char *argv[]) {
@@ -93,8 +93,8 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 	ssize_t read;
 
 	assert(argc == 2);
-	FILE *intermediate_code_file = fopen(argv[1], "wb");
-	assert(intermediate_code_file != NULL);
+	FILE *interim_code_file = fopen(argv[1], "wb");
+	assert(interim_code_file != NULL);
 
 	AsmSrcLine asm_src_line;
 	Table symbol_table;
@@ -125,14 +125,15 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		}
 		/* Previous validations ensure this */
 		assert(instruction != NULL);
-		IntermediateCode intermediate_code;
+		IntermediateCode interim_code;
 		size_t pool_start = 0;
 
 		switch (instruction->class) {
 			case MNEMONIC_CLASS_IS:
-				intermediate_code.address = location_counter;
-				intermediate_code.class = MNEMONIC_CLASS_IS;
-				intermediate_code.opcode = instruction->info.opcode;
+				interim_code.address = location_counter;
+				interim_code.class = MNEMONIC_CLASS_IS;
+				interim_code.opcode = instruction->info.opcode;
+
 				if (instruction->op_type == OP_TYPE_REGISTER ||
 					instruction->op_type == OP_TYPE_CONDITION) {
 
@@ -141,39 +142,55 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 						asm_src_line.operand1,
 						operand_table_lookup_mnemonic);
 					assert(operand != NULL);
-					intermediate_code.op1_val = operand->infoval;
-					strcpy(intermediate_code.op2_unresolved,
-					       asm_src_line.operand2);
+					interim_code.op1_val = operand->infoval;
 					if (is_literal(asm_src_line.operand2)) {
-						Literal literal;
-						strcpy(literal.spec, asm_src_line.operand2);
-						literal.val = get_literal_value(literal.spec);
-						literal.address = ADDRESS_UNRESOLVED;
-						/* TODO take care of pools */
-						table_insert(&literal_table, &literal);
+						Literal literal = {
+							.val=get_literal_value(asm_src_line.operand2),
+							.address=ADDRESS_UNRESOLVED
+						};
+						int index = table_index_from(&literal_table,
+						                             &(literal.val),
+						                             literal_table_lookup_val,
+						                             pool_start);
+						if (index == -1) {
+							index = table_insert(&literal_table, &literal);
+						}
+						interim_code.op2_type = IC_OP2_TYPE_LITERAL_INDEX;
+						interim_code.op2.literal_index = index;
 					}
 					else {
-						Symbol symbol;
+						/* symbol */
+						Symbol symbol = {
+							.spec="",
+							.address=ADDRESS_UNRESOLVED,
+							.is_alias=false
+						};
 						strcpy(symbol.spec, asm_src_line.operand2);
-						symbol.address = ADDRESS_UNRESOLVED;
-						table_insert_or_ignore(&symbol_table, &symbol,
-						                       symbol_table_lookup_symbol);
+
+						int index = table_insert_or_ignore(
+							&symbol_table, &symbol, symbol_table_lookup_symbol);
+						interim_code.op2_type = IC_OP2_TYPE_SYMBOL_INDEX;
+						interim_code.op2.symbol_index = index;
 					}
 				}
 				else if (instruction->op_type == OP_TYPE_SYMBOL) {
-					intermediate_code.op1_val = 0;
-					strcpy(intermediate_code.op2_unresolved,
-					       asm_src_line.operand2);
-					Symbol symbol;
+					interim_code.op1_val = 0;
+					Symbol symbol = {
+						.spec="",
+						.address=ADDRESS_UNRESOLVED,
+						.is_alias=false
+					};
 					strcpy(symbol.spec, asm_src_line.operand2);
-					symbol.address = ADDRESS_UNRESOLVED;
-					table_insert_or_ignore(&symbol_table, &symbol,
-										   symbol_table_lookup_symbol);
+
+					int index = table_insert_or_ignore(
+						&symbol_table, &symbol, symbol_table_lookup_symbol);
+					interim_code.op2_type = IC_OP2_TYPE_SYMBOL_INDEX;
+					interim_code.op2.symbol_index = index;
 				}
 
 				location_counter += instruction->length;
-				fwrite(&intermediate_code, sizeof(intermediate_code), 1,
-				       intermediate_code_file);
+				fwrite(&interim_code, sizeof(interim_code), 1,
+				       interim_code_file);
 				break;
 			case MNEMONIC_CLASS_AD:
 				if (!strcmp(instruction->mnemonic, "START") ||
@@ -181,38 +198,101 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 					location_counter = get_constant_value(
 						asm_src_line.operand1);
 				}
-				else if (!strcmp(instruction->mnemonic, "END")) {
-					location_counter = -1;
-					/* TODO Implicit LTORG */
-				}
 				else if (!strcmp(instruction->mnemonic, "EQU")) {
-					/* TODO */
+					Symbol symbol = {
+						.spec="",
+						.address=ADDRESS_UNRESOLVED,
+						.is_alias=false
+					};
+					strcpy(symbol.spec, asm_src_line.label);
+
+					Symbol *existing = table_find(&symbol_table, symbol.spec,
+					                              symbol_table_lookup_spec);
+					int target_index = table_index(&symbol_table,
+					                               asm_src_line.operand2,
+					                               symbol_table_lookup_spec);
+
+					if (existing == NULL) {
+						existing = table_get(
+							&symbol_table,
+							table_insert(&symbol_table, &symbol));
+					}
+					if (existing->address != ADDRESS_UNRESOLVED) {
+						asm_src_line.error = ASM_SRC_SYMBOL_REDEFINED;
+						handle_error(&asm_src_line);
+					}
+					else {
+						if (target_index == -1) {
+							Symbol symbol = {
+								.spec="",
+								.address=ADDRESS_UNRESOLVED,
+								.is_alias=false
+							};
+							strcpy(symbol.spec, asm_src_line.operand2);
+							target_index = table_insert(&symbol_table, &symbol);
+						}
+						existing->alias_index = target_index;
+						existing->is_alias = true;
+					}
 				}
-				else if (!strcmp(instruction->mnemonic, "LTORG")) {
-					/* TODO Create jump statement */
+				else if (!strcmp(instruction->mnemonic, "LTORG") ||
+				         !strcmp(instruction->mnemonic, "END")) {
+					if (!strcmp(instruction->mnemonic, "LTORG")) {
+						interim_code.address = location_counter;
+						instruction = table_find(
+							&instruction_table, "BC",
+							instruction_table_lookup_mnemonic);
+						interim_code.opcode = instruction->info.opcode;
+						interim_code.class = MNEMONIC_CLASS_IS;
+						interim_code.op1_val = ((Operand *)table_find(
+							&operand_table, "ANY",
+							operand_table_lookup_mnemonic))->infoval;
+						interim_code.op2_type = IC_OP2_TYPE_RESOLVED_ADDRESS;
+						interim_code.op2.resolved_address = (
+							location_counter + 1 +
+							(literal_table.n_entries - pool_start));
+						fwrite(&interim_code, sizeof(interim_code), 1,
+							   interim_code_file);
+					}
+					interim_code.opcode = 0;
+					interim_code.op1_val = 0;
+					interim_code.class = MNEMONIC_CLASS_DS;
+					interim_code.op1_val = 0;
+					interim_code.op2_type = IC_OP2_TYPE_CONSTANT;
 
-					/* for (; */
-						 /* pool_start < literal_table.n_entries; */
-						 /* pool_start++, location_counter += 1) { */
-						/* Literal *literal = table_get(&literal_table, */
-													 /* pool_start); */
-						/* intermediate_code.class=MNEMONIC_CLASS_AD; */
-						/* intermediate_code.opcode = */
+					location_counter += instruction->length;
 
-
-					/* } */
+					for (;
+					     pool_start < literal_table.n_entries;
+						 pool_start++) {
+						interim_code.address = location_counter;
+						Literal *literal = table_get(
+							&literal_table, pool_start);
+						literal->address = interim_code.address;
+						interim_code.op2.constant = literal->val;
+						fwrite(&interim_code, sizeof(interim_code), 1,
+							   interim_code_file);
+						location_counter += 1;
+					}
+					if (!strcmp(instruction->mnemonic, "END")) {
+						location_counter = -1;
+					}
 				}
 				break;
 			case MNEMONIC_CLASS_DS:
 				if (!strcmp(instruction->mnemonic, "DS")) {
-					Symbol symbol;
-					symbol.address = location_counter;
+					Symbol symbol = {
+						.spec="",
+						.address=location_counter,
+						.is_alias=false
+					};
 					strcpy(symbol.spec, asm_src_line.label);
 
-					intermediate_code.class = MNEMONIC_CLASS_DS;
-					intermediate_code.op1_val = get_constant_value(
+					interim_code.opcode = instruction->info.declaration;
+					interim_code.class = MNEMONIC_CLASS_DS;
+					interim_code.op2_type = IC_OP2_TYPE_CONSTANT;
+					interim_code.op2.constant = get_constant_value(
 						asm_src_line.operand1);
-					intermediate_code.opcode = instruction->info.declaration;
 					Symbol *existing= table_find(&symbol_table, symbol.spec,
 					                             symbol_table_lookup_spec);
 					if (existing == NULL) {
@@ -227,18 +307,22 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 							*existing = symbol;
 						}
 					}
-					location_counter += intermediate_code.op1_val;
+					location_counter += interim_code.op2.constant;
 				}
 				else {
 					/* DC */
-					Symbol symbol;
-					symbol.address = location_counter;
+					Symbol symbol = {
+						.spec="",
+						.address=location_counter,
+						.is_alias=false
+					};
 					strcpy(symbol.spec, asm_src_line.label);
-					intermediate_code.class = MNEMONIC_CLASS_DS;
+					interim_code.class = MNEMONIC_CLASS_DS;
 
-					intermediate_code.op1_val = get_literal_value(
+					interim_code.op1_val = get_literal_value(
 						asm_src_line.operand1);
-					intermediate_code.opcode = instruction->info.declaration;
+					interim_code.opcode = instruction->info.declaration;
+					interim_code.op1_val = 0;
 					Symbol *existing= table_find(&symbol_table, symbol.spec,
 					                             symbol_table_lookup_spec);
 					if (existing == NULL) {
@@ -255,8 +339,8 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 					}
 					location_counter += 1;
 				}
-				fwrite(&intermediate_code, sizeof(intermediate_code), 1,
-				       intermediate_code_file);
+				fwrite(&interim_code, sizeof(interim_code), 1,
+				       interim_code_file);
 				break;
 		}
 	}
