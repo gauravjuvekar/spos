@@ -123,7 +123,11 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 	bool start = false;
 	size_t pool_start = 0;
 
-	while (!end && (read = getline(&line, &linelen, stdin)) != -1) {
+	bool fatal_error = false;
+	bool error = false;
+
+	while (!end && !fatal_error &&
+	       (read = getline(&line, &linelen, stdin)) != -1) {
 		if (line[read - 1] == '\n') {
 			line[read - 1] = '\0';
 		}
@@ -132,6 +136,7 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		validate_operands(&asm_src_line);
 		if (asm_src_line.error != ASM_SRC_OK) {
 			handle_error(&asm_src_line);
+			error = true;
 			continue;
 		}
 		else {
@@ -152,7 +157,13 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		}
 		/* Previous validations ensure this */
 		assert(instruction != NULL);
-		IntermediateCode interim_code;
+		IntermediateCode interim_code = {
+			.opcode=0,
+			.op1_val=0,
+			.op2.constant=0,
+			.address=0,
+			.op2_type=IC_OP2_TYPE_CONSTANT,
+		};
 
 		if (asm_src_line.label[0] != '\0') {
 			Symbol symbol = {
@@ -179,9 +190,9 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 			}
 		}
 
+		interim_code.address = location_counter;
 		switch (instruction->class) {
 			case MNEMONIC_CLASS_IS:
-				interim_code.address = location_counter;
 				interim_code.class = MNEMONIC_CLASS_IS;
 				interim_code.opcode = instruction->info.opcode;
 
@@ -243,13 +254,40 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 				emit_interim_code(&interim_code, interim_code_file);
 				break;
 			case MNEMONIC_CLASS_AD:
-				if (!strcmp(instruction->mnemonic, "START") ||
-				    !strcmp(instruction->mnemonic, "ORIGIN")) {
-					if (!strcmp(instruction->mnemonic, "START")) {
-						start = true;
-					}
+				if (!strcmp(instruction->mnemonic, "START")) {
+					start = true;
 					location_counter = get_constant_value(
 						asm_src_line.operand1);
+				}
+				else if (!strcmp(instruction->mnemonic, "ORIGIN")) {
+					if (is_valid_constant(asm_src_line.operand1)) {
+						location_counter =
+							get_constant_value(asm_src_line.operand1);
+					}
+					else {
+						int symbol_index = table_index(
+							&symbol_table, asm_src_line.operand1,
+							symbol_table_lookup_spec);
+						if (symbol_index == -1) {
+							printf("Error: Unknown reference to %s\n",
+								   asm_src_line.operand1);
+							fatal_error = true;
+						}
+						else {
+							Symbol *symbol = table_get(
+								&symbol_table, symbol_index);
+							if (symbol->address == ADDRESS_UNRESOLVED) {
+								printf("Error: Forward reference to %s "
+								       "is not supported\n",
+								       asm_src_line.operand1);
+								fatal_error = true;
+							}
+							else {
+								location_counter = symbol->address;
+							}
+						}
+					}
+
 				}
 				else if (!strcmp(instruction->mnemonic, "EQU")) {
 					Symbol symbol = {
@@ -356,6 +394,10 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 	}
 	fclose(interim_code_file);
 	interim_code_file = fopen(argv[1], "rb");
+	if (fatal_error || error) {
+		printf("Aborting due to errors\n");
+		exit(1);
+	}
 #if DEBUG
 	int literal_index = 0;
 	printf("--------------------Literal table\n");
@@ -373,5 +415,11 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 	}
 	printf("--------------------ASM OUTPUT\n");
 #endif
-	pass_2(&symbol_table, &literal_table, interim_code_file, stdout);
+	if (!pass_2(&symbol_table, &literal_table, interim_code_file, stdout)) {
+		fatal_error = true;
+	}
+	if (fatal_error) {
+		printf("Aborting due to errors\n");
+		exit(2);
+	}
 }

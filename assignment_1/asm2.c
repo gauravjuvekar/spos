@@ -24,15 +24,15 @@ void emit_assembled_code(IntermediateCode *interim_code, FILE *output_file) {
 	    interim_code->op1_val != 0) {
 		const Address end_address =
 			interim_code->address + interim_code->op1_val;
-		for (; interim_code->address < end_address; interim_code->address++ ) {
-			fprintf(output_file, "%d)\n", interim_code->address);
+		for (; interim_code->address < end_address; interim_code->address++) {
+			fprintf(output_file, "%03d)\n", interim_code->address);
 		}
 	}
 	else  {
 		assert(interim_code->op2_type == IC_OP2_TYPE_CONSTANT ||
 		       interim_code->op2_type == IC_OP2_TYPE_RESOLVED_ADDRESS);
 		fprintf(output_file,
-				"%d) %d %d %d\n",
+				"%03d) +%02d %d %03d\n",
 				interim_code->address,
 				interim_code->opcode,
 				interim_code->op1_val,
@@ -40,7 +40,7 @@ void emit_assembled_code(IntermediateCode *interim_code, FILE *output_file) {
 	}
 }
 
-void pass_2(
+bool pass_2(
 	const Table *symbol_table,
 	const Table *literal_table,
 	FILE *interm_code_file,
@@ -99,4 +99,5 @@ void pass_2(
 				break;
 		}
 	}
+	return !fatal_error;
 }

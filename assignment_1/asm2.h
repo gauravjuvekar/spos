@@ -2,9 +2,10 @@
 #define ASM2_H 1
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "table.h"
 
-void pass_2(
+bool pass_2(
 	const Table *symbol_table,
 	const Table *literal_table,
 	FILE *interm_code_file,
