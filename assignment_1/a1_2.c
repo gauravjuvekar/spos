@@ -28,9 +28,15 @@ int compare_entry_phno(const void *a, const void *b) {
 }
 
 int main(int argc, char *argv[]) {
-	assert(argc == 2);
-
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <file>\n", argv[0]);
+		exit(1);
+	}
 	FILE *input = fopen(argv[1], "r");
+	if (input == NULL) {
+		fprintf(stderr, "Unable to open file %s\n", argv[1]);
+		exit(1);
+	}
 
 	Table table;
 	table_init(&table, sizeof(Entry));
