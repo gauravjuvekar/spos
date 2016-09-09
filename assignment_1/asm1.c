@@ -393,11 +393,21 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		}
 	}
 	fclose(interim_code_file);
-	interim_code_file = fopen(argv[1], "rb");
+	if (!start) {
+		printf("Error : START not found\n");
+		fatal_error = true;
+	}
+	if (!end) {
+		printf("Error : END not found\n");
+		fatal_error = true;
+	}
 	if (fatal_error || error) {
 		printf("Aborting due to errors\n");
 		exit(1);
 	}
+
+
+	interim_code_file = fopen(argv[1], "rb");
 #if DEBUG
 	int literal_index = 0;
 	printf("--------------------Literal table\n");
