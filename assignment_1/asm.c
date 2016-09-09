@@ -70,7 +70,7 @@ static int get_tokens(char tokens[static MAX_TOKENS_PER_LINE][32],
 	for (n_tokens = 0;
 	     n_tokens < MAX_TOKENS_PER_LINE;
 	     n_tokens++, line = NULL) {
-		token = strtok_r(line, ", ", &saveptr);
+		token = strtok_r(line, ", \t", &saveptr);
 		if (token == NULL) {
 			break;
 		}
