@@ -102,7 +102,7 @@ int table_update_or_insert(Table *table, const void *entry,
 int table_insert_or_ignore(Table *table, const void *entry,
                            table_compare_entry compare_function) {
 	int index = table_index(table, entry, compare_function);
-	if (index < -1) {
+	if (index == -1) {
 		index = table_insert(table, entry);
 	}
 	return index;

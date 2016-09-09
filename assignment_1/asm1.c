@@ -67,7 +67,7 @@ void validate_operands(AsmSrcLine *src_line) {
 
 
 void handle_error(AsmSrcLine *asm_src_line) {
-	printf("%s|%s|%s|%s:error:%s\n",
+	printf("Error: %s|%s|%s|%s: %s\n",
 		   asm_src_line->label,
 		   asm_src_line->mnemonic,
 		   asm_src_line->operand1,
@@ -85,6 +85,18 @@ int symbol_table_lookup_symbol(const void *symbol, const void *entry) {
 
 int literal_table_lookup_val(const void *literal, const void *entry) {
 	return *((int *)literal) - ((Literal *)entry)->val ;
+}
+
+void emit_interim_code(const IntermediateCode *interim_code, FILE* file) {
+	fwrite(interim_code, sizeof(*interim_code), 1, file);
+#if DEBUG
+	printf("IC >> : %d) %d %d |%s|%d\n",
+	       interim_code->address,
+	       interim_code->opcode,
+	       interim_code->op1_val,
+		   IC_OP2_STR[interim_code->op2_type],
+		   interim_code->op2.constant);
+#endif
 }
 
 int main(__attribute__((unused))int argc, char *argv[]) {
@@ -118,6 +130,15 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		if (asm_src_line.error != ASM_SRC_OK) {
 			handle_error(&asm_src_line);
 			continue;
+		}
+		else {
+#if DEBUG
+		printf("In << : %s|%s|%s|%s\n",
+			   asm_src_line.label,
+			   asm_src_line.mnemonic,
+			   asm_src_line.operand1,
+			   asm_src_line.operand2);
+#endif
 		}
 
 		Instruction *instruction = table_find(&instruction_table,
@@ -191,8 +212,7 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 				}
 
 				location_counter += instruction->length;
-				fwrite(&interim_code, sizeof(interim_code), 1,
-				       interim_code_file);
+				emit_interim_code(&interim_code, interim_code_file);
 				break;
 			case MNEMONIC_CLASS_AD:
 				if (!strcmp(instruction->mnemonic, "START") ||
@@ -259,8 +279,7 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 						interim_code.op2.resolved_address = (
 							location_counter + 1 +
 							(literal_table.n_entries - pool_start));
-						fwrite(&interim_code, sizeof(interim_code), 1,
-							   interim_code_file);
+						emit_interim_code(&interim_code, interim_code_file);
 					}
 					interim_code.opcode = 0;
 					interim_code.op1_val = 0;
@@ -278,8 +297,7 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 							&literal_table, pool_start);
 						literal->address = interim_code.address;
 						interim_code.op2.constant = literal->val;
-						fwrite(&interim_code, sizeof(interim_code), 1,
-							   interim_code_file);
+						emit_interim_code(&interim_code, interim_code_file);
 						location_counter += 1;
 					}
 					if (!strcmp(instruction->mnemonic, "END")) {
@@ -352,8 +370,7 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 					}
 					location_counter += 1;
 				}
-				fwrite(&interim_code, sizeof(interim_code), 1,
-				       interim_code_file);
+				emit_interim_code(&interim_code, interim_code_file);
 				break;
 		}
 	}

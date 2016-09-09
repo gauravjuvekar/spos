@@ -28,6 +28,13 @@ typedef enum IntermediateCodeOp2Type {
 	IC_OP2_TYPE_RESOLVED_ADDRESS,
 } IntermediateCodeOp2Type;
 
+static const char *IC_OP2_STR[] = {
+	[IC_OP2_TYPE_LITERAL_INDEX]="literal",
+	[IC_OP2_TYPE_SYMBOL_INDEX]="symbol",
+	[IC_OP2_TYPE_CONSTANT]="constant",
+	[IC_OP2_TYPE_RESOLVED_ADDRESS]="resolved address"
+};
+
 typedef struct IntermediateCode {
 	Address address;
 	MnemonicClass class;
