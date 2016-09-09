@@ -8,9 +8,12 @@
 #include "table.h"
 #include "asm.h"
 #include "asm1.h"
+#include "asm2.h"
 
 
-#define DEBUG 1
+#ifndef DEBUG
+#define DEBUG 0
+#endif
 
 #if !DEBUG
 #define NDEBUG 1
@@ -151,6 +154,31 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 		assert(instruction != NULL);
 		IntermediateCode interim_code;
 
+		if (asm_src_line.label[0] != '\0') {
+			Symbol symbol = {
+				.spec="",
+				.address=location_counter,
+				.is_alias=false
+			};
+			strcpy(symbol.spec, asm_src_line.label);
+
+			int existing_index = table_index(
+				&symbol_table, symbol.spec, symbol_table_lookup_spec);
+			if (existing_index == -1) {
+				existing_index = table_insert(&symbol_table, &symbol);
+			}
+			else {
+				Symbol *existing = table_get(&symbol_table, existing_index);
+				if (existing->address != ADDRESS_UNRESOLVED) {
+					asm_src_line.error = ASM_SRC_SYMBOL_REDEFINED;
+					handle_error(&asm_src_line);
+				}
+				else {
+					*existing = symbol;
+				}
+			}
+		}
+
 		switch (instruction->class) {
 			case MNEMONIC_CLASS_IS:
 				interim_code.address = location_counter;
@@ -236,50 +264,45 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 					int target_index = table_index(
 						&symbol_table, asm_src_line.operand2,
 						symbol_table_lookup_spec);
-
-					if (existing_index == -1) {
-						existing_index = table_insert(&symbol_table, &symbol);
-					}
+					/* Already inserted and resolved as a label */
 					assert(existing_index != -1);
+					assert(((Symbol *)table_get(
+						&symbol_table, existing_index))->address !=
+						ADDRESS_UNRESOLVED);
 
-					if (((Symbol *)table_get(&symbol_table, existing_index)) ->
-					    address != ADDRESS_UNRESOLVED) {
-						asm_src_line.error = ASM_SRC_SYMBOL_REDEFINED;
-						handle_error(&asm_src_line);
+					if (target_index == -1) {
+						Symbol symbol = {
+							.spec="",
+							.address=ADDRESS_UNRESOLVED,
+							.is_alias=false
+						};
+						strcpy(symbol.spec, asm_src_line.operand2);
+						target_index = table_insert(&symbol_table, &symbol);
 					}
-					else {
-						if (target_index == -1) {
-							Symbol symbol = {
-								.spec="",
-								.address=ADDRESS_UNRESOLVED,
-								.is_alias=false
-							};
-							strcpy(symbol.spec, asm_src_line.operand2);
-							target_index = table_insert(&symbol_table, &symbol);
-						}
-						Symbol *existing = (
-							(Symbol *)table_get(&symbol_table, existing_index));
-						existing->alias_index = target_index;
-						existing->is_alias = true;
-					}
+					Symbol *existing = (
+						(Symbol *)table_get(&symbol_table, existing_index));
+					existing->alias_index = target_index;
+					existing->is_alias = true;
 				}
 				else if (!strcmp(instruction->mnemonic, "LTORG") ||
 				         !strcmp(instruction->mnemonic, "END")) {
 					if (!strcmp(instruction->mnemonic, "LTORG")) {
-						interim_code.address = location_counter;
-						instruction = table_find(
-							&instruction_table, "BC",
-							instruction_table_lookup_mnemonic);
-						interim_code.opcode = instruction->info.opcode;
-						interim_code.class = MNEMONIC_CLASS_IS;
-						interim_code.op1_val = ((Operand *)table_find(
-							&operand_table, "ANY",
-							operand_table_lookup_mnemonic))->infoval;
-						interim_code.op2_type = IC_OP2_TYPE_RESOLVED_ADDRESS;
-						interim_code.op2.resolved_address = (
-							location_counter + 1 +
-							(literal_table.n_entries - pool_start));
-						emit_interim_code(&interim_code, interim_code_file);
+						/* Should LTORG create a branch on its own? */
+
+						/* interim_code.address = location_counter; */
+						/* instruction = table_find( */
+							/* &instruction_table, "BC", */
+							/* instruction_table_lookup_mnemonic); */
+						/* interim_code.opcode = instruction->info.opcode; */
+						/* interim_code.class = MNEMONIC_CLASS_IS; */
+						/* interim_code.op1_val = ((Operand *)table_find( */
+							/* &operand_table, "ANY", */
+							/* operand_table_lookup_mnemonic))->infoval; */
+						/* interim_code.op2_type = IC_OP2_TYPE_RESOLVED_ADDRESS; */
+						/* interim_code.op2.resolved_address = ( */
+							/* location_counter + 1 + */
+							/* (literal_table.n_entries - pool_start)); */
+						/* emit_interim_code(&interim_code, interim_code_file); */
 					}
 					interim_code.opcode = 0;
 					interim_code.op1_val = 0;
@@ -308,70 +331,47 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 				break;
 			case MNEMONIC_CLASS_DS:
 				if (!strcmp(instruction->mnemonic, "DS")) {
-					Symbol symbol = {
-						.spec="",
-						.address=location_counter,
-						.is_alias=false
-					};
-					strcpy(symbol.spec, asm_src_line.label);
-
 					interim_code.opcode = instruction->info.declaration;
 					interim_code.class = MNEMONIC_CLASS_DS;
 					interim_code.op2_type = IC_OP2_TYPE_CONSTANT;
 					interim_code.op2.constant = get_constant_value(
 						asm_src_line.operand1);
-					int existing_index = table_index(
-						&symbol_table, symbol.spec, symbol_table_lookup_spec);
-					if (existing_index == -1) {
-						table_insert(&symbol_table, &symbol);
-					}
-					else {
-						if (((Symbol *)table_get(&symbol_table, existing_index))
-						    ->address != ADDRESS_UNRESOLVED) {
-							asm_src_line.error = ASM_SRC_SYMBOL_REDEFINED;
-							handle_error(&asm_src_line);
-						}
-						else {
-							*((Symbol *)table_get(
-								&symbol_table, existing_index)) = symbol;
-						}
-					}
+					interim_code.op1_val = interim_code.op2.constant;
+
 					location_counter += interim_code.op2.constant;
 				}
 				else {
 					/* DC */
-					Symbol symbol = {
-						.spec="",
-						.address=location_counter,
-						.is_alias=false
-					};
-					strcpy(symbol.spec, asm_src_line.label);
 					interim_code.class = MNEMONIC_CLASS_DS;
-
-					interim_code.op1_val = get_literal_value(
+					interim_code.op2.constant = get_literal_value(
 						asm_src_line.operand1);
 					interim_code.opcode = instruction->info.declaration;
 					interim_code.op1_val = 0;
-					int existing_index = table_index(
-						&symbol_table, symbol.spec, symbol_table_lookup_spec);
-					if (existing_index == -1) {
-						table_insert(&symbol_table, &symbol);
-					}
-					else {
-						if (((Symbol *)table_get(&symbol_table, existing_index))
-						    ->address != ADDRESS_UNRESOLVED) {
-							asm_src_line.error = ASM_SRC_SYMBOL_REDEFINED;
-							handle_error(&asm_src_line);
-						}
-						else {
-							*((Symbol *)table_get(
-								&symbol_table, existing_index)) = symbol;
-						}
-					}
+					interim_code.op2_type = IC_OP2_TYPE_CONSTANT;
 					location_counter += 1;
 				}
 				emit_interim_code(&interim_code, interim_code_file);
 				break;
 		}
 	}
+	fclose(interim_code_file);
+	interim_code_file = fopen(argv[1], "rb");
+#if DEBUG
+	int literal_index = 0;
+	printf("--------------------Literal table\n");
+	for (; literal_index < (int)literal_table.n_entries; literal_index++) {
+		Literal *literal = table_get(&literal_table, literal_index);
+		printf("[%d] %d %d\n", literal_index, literal->val, literal->address);
+	}
+
+	int symbol_index = 0;
+	printf("--------------------Symbol table\n");
+	for (; symbol_index < (int)symbol_table.n_entries; symbol_index++) {
+		Symbol *symbol = table_get(&symbol_table, symbol_index);
+		printf("[%d] %s %d %d\n",
+		       symbol_index, symbol->spec, symbol->address, symbol->is_alias);
+	}
+	printf("--------------------ASM OUTPUT\n");
+#endif
+	pass_2(&symbol_table, &literal_table, interim_code_file, stdout);
 }
