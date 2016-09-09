@@ -21,6 +21,8 @@
 
 #include <assert.h>
 
+#define ASSEMBLER_BRANCHES_OVER_LTORG 0
+
 bool is_validate_operand(OperandType type,
                          const char operand[static MAX_TOKEN_LEN]) {
 	if ((type == OP_TYPE_SYMBOL   && is_literal(operand)) ||
@@ -326,21 +328,22 @@ int main(__attribute__((unused))int argc, char *argv[]) {
 				         !strcmp(instruction->mnemonic, "END")) {
 					if (!strcmp(instruction->mnemonic, "LTORG")) {
 						/* Should LTORG create a branch on its own? */
-
-						/* interim_code.address = location_counter; */
-						/* instruction = table_find( */
-							/* &instruction_table, "BC", */
-							/* instruction_table_lookup_mnemonic); */
-						/* interim_code.opcode = instruction->info.opcode; */
-						/* interim_code.class = MNEMONIC_CLASS_IS; */
-						/* interim_code.op1_val = ((Operand *)table_find( */
-							/* &operand_table, "ANY", */
-							/* operand_table_lookup_mnemonic))->infoval; */
-						/* interim_code.op2_type = IC_OP2_TYPE_RESOLVED_ADDRESS; */
-						/* interim_code.op2.resolved_address = ( */
-							/* location_counter + 1 + */
-							/* (literal_table.n_entries - pool_start)); */
-						/* emit_interim_code(&interim_code, interim_code_file); */
+#if ASSEMBLER_BRANCHES_OVER_LTORG
+						interim_code.address = location_counter;
+						instruction = table_find(
+							&instruction_table, "BC",
+							instruction_table_lookup_mnemonic);
+						interim_code.opcode = instruction->info.opcode;
+						interim_code.class = MNEMONIC_CLASS_IS;
+						interim_code.op1_val = ((Operand *)table_find(
+							&operand_table, "ANY",
+							operand_table_lookup_mnemonic))->infoval;
+						interim_code.op2_type = IC_OP2_TYPE_RESOLVED_ADDRESS;
+						interim_code.op2.resolved_address = (
+							location_counter + 1 +
+							(literal_table.n_entries - pool_start));
+						emit_interim_code(&interim_code, interim_code_file);
+#endif
 					}
 					interim_code.opcode = 0;
 					interim_code.op1_val = 0;
