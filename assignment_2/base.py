@@ -11,7 +11,7 @@ def generate_processes(count):
 
 def generate_blocks():
     return (Block(size=random.randint(1, 10))
-            for block in range(random.randrange(10)))
+            for block in range(random.randrange(2, 10)))
 
 class Block(object):
     def __init__(self, size, contents=None):
