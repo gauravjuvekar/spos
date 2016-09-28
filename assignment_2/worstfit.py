@@ -4,7 +4,7 @@ import base
 import itertools
 
 memory = base.Memory()
-GENERATE_MANUALLY = True
+GENERATE_MANUALLY = False
 
 def worstfit(memory, process):
     finder = iter(enumerate(memory.blocks))
@@ -26,10 +26,10 @@ def worstfit(memory, process):
 
 print(memory)
 if not GENERATE_MANUALLY:
-    for process in base.generate_processes(5):
+    for process in base.generate_processes(7):
         print("*"*80)
         print("New process to insert", process)
-        if not bestfit(memory, process):
+        if not worstfit(memory, process):
             print("*** COULD NOT ALLOCATE ***")
         print("Memory contents")
         print(memory)

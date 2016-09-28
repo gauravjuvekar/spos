@@ -4,7 +4,7 @@ import base
 import itertools
 
 memory = base.Memory()
-GENERATE_MANUALLY = True
+GENERATE_MANUALLY = False
 
 def first_fit(memory, process):
     for block in memory.blocks:
@@ -16,10 +16,10 @@ def first_fit(memory, process):
 
 print(memory)
 if not GENERATE_MANUALLY:
-    for process in base.generate_processes(5):
+    for process in base.generate_processes(7):
         print("*"*80)
         print("New process to insert", process)
-        if not bestfit(memory, process):
+        if not first_fit(memory, process):
             print("*** COULD NOT ALLOCATE ***")
         print("Memory contents")
         print(memory)

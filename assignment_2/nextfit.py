@@ -4,7 +4,7 @@ import base
 import itertools
 
 memory = base.Memory()
-GENERATE_MANUALLY = True
+GENERATE_MANUALLY = False
 
 last_insert = 0
 def nextfit(memory, process):
@@ -23,10 +23,10 @@ def nextfit(memory, process):
 
 print(memory)
 if not GENERATE_MANUALLY:
-    for process in base.generate_processes(5):
+    for process in base.generate_processes(7):
         print("*"*80)
         print("New process to insert", process)
-        if not bestfit(memory, process):
+        if not nextfit(memory, process):
             print("*** COULD NOT ALLOCATE ***")
         print("Memory contents")
         print(memory)
