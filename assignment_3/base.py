@@ -37,7 +37,8 @@ class Memory(object):
             return None
 
     def __repr__(self):
-        return pprint.pformat(self.contents)
+        return (pprint.pformat(self.contents) + "\n" +
+                "Page table: " + pprint.pformat(self.page_table))
 
 
 def run(memory):
