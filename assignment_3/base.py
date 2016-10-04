@@ -24,15 +24,14 @@ class Frame(object):
     def __repr__(self):
         return "Frame(contents={contents})".format(contents=self.contents)
 
-
 class Memory(object):
     def __init__(self, n_frames):
         self.contents = [Frame() for _ in range(n_frames)]
+        self.page_table = dict()
 
     def index(self, page):
-        for i, frame in enumerate(self.contents):
-            if frame.contents is not None and frame.contents == page:
-                return i
+        if page.num in self.page_table:
+            return self.page_table[page.num]
         else:
             return None
 
@@ -42,14 +41,14 @@ class Memory(object):
 
 def run(memory):
     pages = [0, 1, 3, 6, 2, 4, 5, 2, 5, 0, 3, 1, 2, 5, 4, 1, 0]
+    pages = [Page(x) for x in pages]
 
     print(memory)
     page_fault_count = 0
-    for page in pages:
+    for i, page in enumerate(pages):
         print("*"*80)
-        page = Page(page)
         print("Looking up", page)
-        fault, index = memory.next(page)
+        fault, index = memory.next(page, future_pages=pages[i + 1:])
         if fault:
             page_fault_count += 1
             print("*** Page fault occurred")
