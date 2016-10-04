@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pprint
+from termcolor import colored
 
 
 class Page(object):
@@ -51,10 +52,11 @@ def run(memory):
         fault, index = memory.next(page, future_pages=pages[i + 1:])
         if fault:
             page_fault_count += 1
-            print("*** Page fault occurred")
+            print(colored("*** Page fault occurred", 'red'))
             print("New page at index", index)
         else:
-            print("Found at index", index)
+            print(colored("Found at index {index}".format(index=index),
+                          'green'))
         print(memory)
     print("="*80)
     print("Total page faults", page_fault_count)
