@@ -23,7 +23,9 @@ class OptimalMem(base.Memory):
         for future_page in future_pages:
             if len(possible_frames) > 1:
                 if future_page.num in self.page_table:
-                    possible_frames.remove(self.page_table[future_page.num])
+                    remove = self.page_table[future_page.num]
+                    if remove in possible_frames:
+                        possible_frames.remove(remove)
             else:
                 break
         assert(len(possible_frames) >= 1)
