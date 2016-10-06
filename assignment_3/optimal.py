@@ -5,10 +5,7 @@ import pprint
 
 
 class OptimalMem(base.Memory):
-    def next(self, page, **kwargs):
-        assert('future_pages' in kwargs)
-        future_pages = kwargs['future_pages']
-
+    def next(self, page, future_pages, **kwargs):
         index = self.index(page)
         if index is not None:
             return False, index
