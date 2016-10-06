@@ -42,7 +42,7 @@ class Memory(object):
 
 
 def run(memory):
-    pages = [0, 1, 3, 6, 2, 4, 5, 2, 5, 0, 3, 1, 2, 5, 4, 1, 0]
+    pages = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1]
     pages = [Page(x) for x in pages]
 
     print(memory)
@@ -63,5 +63,5 @@ def run(memory):
     print("Total page faults", page_fault_count)
 
 def run_cls(memory_cls):
-    memory = memory_cls(4)
+    memory = memory_cls(3)
     run(memory)
