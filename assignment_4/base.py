@@ -4,12 +4,13 @@ import pprint
 
 
 class Process(object):
-    def __init__(self, pid, burst_time):
+    def __init__(self, pid, burst_time, priority=0):
         self.pid = pid
         self.burst_time = burst_time
+        self.priority = priority
 
     def __repr__(self):
-        return "Process(pid={pid})".format(
+        return "Process(pid={pid}, priority={priority})".format(
             **self.__dict__)
 
 
@@ -37,11 +38,11 @@ class Scheduler(object):
 
 def run(scheduler_class):
     processes = [
-        (0, Process(pid=1, burst_time=4)),
-        (1, Process(pid=2, burst_time=5)),
-        (2, Process(pid=3, burst_time=2)),
-        (3, Process(pid=4, burst_time=3)),
-        (4, Process(pid=5, burst_time=6))]
+        (0, Process(pid=1, burst_time=4, priority=4)),
+        (1, Process(pid=2, burst_time=5, priority=0)),
+        (2, Process(pid=3, burst_time=2, priority=2)),
+        (3, Process(pid=4, burst_time=3, priority=1)),
+        (4, Process(pid=5, burst_time=6, priority=3))]
 
     scheduler = scheduler_class()
 
