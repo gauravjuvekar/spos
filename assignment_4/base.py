@@ -20,7 +20,13 @@ class Scheduler(object):
         self.currently_running = None
 
     def _add_to_history(self, process, run_start, run_end):
-        self.history.append((run_start, run_end, process))
+        if (len(self.history) and
+                self.history[-1][1] == run_start and
+                self.history[-1][2] == process):
+            orig = self.history[-1]
+            self.history[-1] = orig[0], run_end, orig[2]
+        else:
+            self.history.append((run_start, run_end, process))
 
     def interrupt(self, time):
         raise NotImplementedError()
