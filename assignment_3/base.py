@@ -43,6 +43,7 @@ class Memory(object):
 
 def run(memory):
     pages = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1]
+    dirties = [1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1]
     pages = [Page(x) for x in pages]
 
     print(memory)
@@ -50,7 +51,9 @@ def run(memory):
     for i, page in enumerate(pages):
         print("*"*80)
         print("Looking up", page)
-        fault, index = memory.next(page, future_pages=pages[i + 1:])
+        fault, index = memory.next(page,
+                                   future_pages=pages[i + 1:],
+                                   dirties=dirties[i])
         if fault:
             page_fault_count += 1
             print(colored("*** Page fault occurred", 'red'))
