@@ -9,7 +9,7 @@ class Process(object):
         self.burst_time = burst_time
 
     def __repr__(self):
-        return "Process(pid={pid}, burst_time=burst_time)".format(
+        return "Process(pid={pid})".format(
             **self.__dict__)
 
 
