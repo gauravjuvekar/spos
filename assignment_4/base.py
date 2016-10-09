@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 import pprint
+import matplotlib.pyplot as plot
+import matplotlib
+import numpy
+import itertools
 
 
 class Process(object):
@@ -33,6 +37,33 @@ class Scheduler(object):
         raise NotImplementedError()
 
     def print(self):
+        counter = itertools.count()
+        uniq_processes = dict()
+        for proc, count in zip(
+                sorted(list(set((hist[2] for hist in self.history))),
+                       key=lambda p:p.pid),
+                counter):
+            uniq_processes[proc] = count
+        n_colors = counter.__next__()
+        colors = list(matplotlib.cm.rainbow(numpy.linspace(0, 1, n_colors)))
+
+        figure = matplotlib.pyplot.figure()
+        subplot = figure.add_subplot(111)
+        subplot.xaxis.set_major_locator(
+            matplotlib.ticker.MultipleLocator(base=1))
+        for start, end, proc in self.history:
+            subplot.barh(
+                bottom=uniq_processes[proc],
+                width=end - start,
+                height=1,
+                left=start,
+                color=colors[uniq_processes[proc]],
+                align='center')
+        matplotlib.pyplot.grid()
+        ytics = list(uniq_processes.items())
+        matplotlib.pyplot.yticks(
+            [_[1] for _ in ytics], [repr(_[0]) for _ in ytics])
+        matplotlib.pyplot.show()
         pprint.pprint(self.history)
 
 
