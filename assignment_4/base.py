@@ -59,10 +59,12 @@ class Scheduler(object):
                 left=start,
                 color=colors[uniq_processes[proc]],
                 align='center')
+        subplot.set_autoscalex_on(False)
+        subplot.set_xlim([0, self.history[-1][1]])
         matplotlib.pyplot.grid()
         ytics = list(uniq_processes.items())
         matplotlib.pyplot.yticks(
-            [_[1] for _ in ytics], [repr(_[0]) for _ in ytics])
+            [_[1] for _ in ytics], [pprint.pformat(_[0]) for _ in ytics])
         matplotlib.pyplot.show()
         pprint.pprint(self.history)
 
