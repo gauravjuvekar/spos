@@ -42,8 +42,8 @@ class Memory(object):
 
 
 def run(memory):
-    pages = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1]
-    dirties = [1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1]
+    pages =   [0, 1, 5, 0, 1, 2, 0, 4, 4, 5]
+    dirties = [0, 1, 0, 0, 1, 0, 0, 1, 1, 0]
     pages = [Page(x) for x in pages]
 
     print(memory)
