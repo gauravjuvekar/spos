@@ -71,13 +71,18 @@ class Scheduler(object):
 
 
 def run(scheduler_class):
-    # Tuplies of (arrival_time, process)
+    # Tuples of (arrival_time, process)
     processes = deque([
-        (0, Process(pid=1, burst_time=4, priority=4)),
-        (1, Process(pid=2, burst_time=5, priority=0)),
-        (2, Process(pid=3, burst_time=2, priority=2)),
-        (3, Process(pid=4, burst_time=3, priority=1)),
-        (20, Process(pid=5, burst_time=6, priority=3))])
+        (0, Process(pid=1, burst_time=5, priority=3)),
+        (1, Process(pid=2, burst_time=1, priority=0)),
+        (2, Process(pid=3, burst_time=3, priority=1)),
+        (3, Process(pid=4, burst_time=5, priority=2)),
+        (20, Process(pid=5, burst_time=7, priority=0)),
+        (25, Process(pid=6, burst_time=1, priority=2)),
+        (30, Process(pid=7, burst_time=3, priority=5)),
+        (30, Process(pid=8, burst_time=5, priority=3)),
+        (31, Process(pid=9, burst_time=2, priority=5)),
+        (40, Process(pid=10, burst_time=8, priority=2))])
 
     scheduler = scheduler_class()
 
