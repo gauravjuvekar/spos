@@ -71,6 +71,7 @@ class Scheduler(object):
 
 
 def run(scheduler_class):
+    # Tuplies of (arrival_time, process)
     processes = deque([
         (0, Process(pid=1, burst_time=4, priority=4)),
         (1, Process(pid=2, burst_time=5, priority=0)),
