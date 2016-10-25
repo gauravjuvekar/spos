@@ -26,6 +26,8 @@ class Scheduler(object):
         self.currently_running = None
 
     def _add_to_history(self, process, run_start, run_end):
+        if run_start == run_end:
+            return
         if (len(self.history) and
                 self.history[-1][1] == run_start and
                 self.history[-1][2] == process):
