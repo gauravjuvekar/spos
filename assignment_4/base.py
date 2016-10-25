@@ -81,7 +81,7 @@ def run(scheduler_class):
         (3, Process(pid=4, burst_time=5, priority=2)),
         (20, Process(pid=5, burst_time=7, priority=0)),
         (25, Process(pid=6, burst_time=1, priority=2)),
-        (30, Process(pid=7, burst_time=3, priority=5)),
+        (27, Process(pid=7, burst_time=3, priority=5)),
         (30, Process(pid=8, burst_time=5, priority=3)),
         (31, Process(pid=9, burst_time=2, priority=5)),
         (40, Process(pid=10, burst_time=8, priority=2))])
